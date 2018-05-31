@@ -1,44 +1,44 @@
-/* global PIXI */
+/* global PIXI, Heap */
 const map = ` 
-xxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxx0000xxxxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxx0000xxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxx00x00xxxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxx00xx0xxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxx00xxx000xxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxx00xxx0xxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxx00xxxxxx0000xxxxxxxxxxx0000000xxxxxxxxxxxxxx00xxxx000xxxxxxx00xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxx00xxxxxxxxxx0000000000000xxxx00xxxxxxxxxxxxx00xxxxxxx0xxxxxx00xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxx00xxxxxxxx00000000xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxxxxx00xxxxxxxxxxx00xxxxxxxxx0xxxxxx0xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxxxxx00xxxxxxxxx00xxxxxxxxx0xxxxxxx00xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxx00xxxxxxxxxxxx0xxxxxxxxxxx00xxxxxxxx00xxxxxxxxx0xxxxxxxxx0xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxx00xxxxxxxxxxx0xxxxxxxxxxxx00xxxxxx00xxxxxxxxx0xxxxxxxxxx0xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxxx00xxxxxxxxxxx0xxxxxxxxxxx00xxxxx00xxxxxxxxxx0xxxxxxxxxx0xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxxxx00xxxxxxxxxx0xxxxxxxxxxxx00xxx00xxxxxxxxxx0xxxxxxxxxxx0xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxxxxx00xxxxxxxxxx0xxxxxxxxxxx0000000xxxxxxxxx0xxxxxxxxxxxx0xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxxxx00000000000000000000000000000000xxxxxxxxx0xxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-x00000000000000000000000000000000000000000xxx00000000000000000xxxxxxxx00xxxxxxxxxxxxxxxxxxxxxxxxxxxx
-x00000000000000000000000000000000000000000xxx00xxxxxxxxxxx0xxxxxxxxxxxx0xxxxxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxxxxxxx0xxxxxxx0xxxxx0xxxxxxx0000000xxxxxxxxxxx0xxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxxxxxxx000000000xxxxx0xxxxxxx0000000xxxxxxxxxxx0xxxxxxxxxxxxx0xxxxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxx0xxxxxxxx000xxxxxxxxxxxxxx0xxxxxxxxxxxxx0xxxxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxx0xxxxxxxx000xxxxxxxxxxxxxxx0xxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxx0xxxxxxxx000xxxxxxxxxxxxxxx0xxxxxxxxxxxxx0xxxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxx00000000000xxxxxxxxxxxxxxxxx0xxxxxxxxxxxxx0xxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxxxxxxxxx0xxxxxxx0xxxxxxxxxxx00xxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxxxxxxxxx0xxxxxxx0xxxxxxxxxxx00xxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxx0xxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxxxxxxxxx0xxxxxxx00000000000000xxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxxx
-xxxxxx0000xxxxxxxxxx0xxxxxxxxxxxxxxxxxx000xxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxx000xxxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxx000000xxxxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxx0x00xxxxxxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxxxxx00x000000xxxxxx0000x00xxxxxxxx0xxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxxxx00xxxxxxxxx000000xxxxx00xxxxxxxx00xxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxx00xxxxxxxxxxxxxx0xxxxxx00xxxxxxxxxx0xxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxxx
-000000000000xxxxxxxxxxxxx000x00xxxx00xxxxxxxxxx0xxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxx
+xxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxx0000xxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxx0000xxxxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxx0000xxxxxxxxxxxx00xx000xxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxx00x00xxxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxx00xx0xxxxxxxxxxx00xxxxx00xxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxx00xxx000xxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxx00xxx0xxxxxxxxxx00xxxxxxx00xxxxxxxxxxxxxxxxxxx
+xxxxxxxxx00xxxxxx0000xxxxxxxxxxx0000000xxxxxxxxxxxxxx00xxxx000xxxxxxx00xxxxxx000xxxxxxxxxxxxxxxxxxxx
+xxxxxxxx00xxxxxxxxxx0000000000000xxxx00xxxxxxxxxxxxx00xxxxxxx0xxxxxx00xxxxxx00xxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxx00xxxxxxxx00000000xxxxxxx0xxxxxxx000xxxxxxxxxxxxx
+xxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxxxxx00xxxxxxxxxxx00xxxxxxxx00xxxxxx0xxxxxxx0000xx000x00000xxxxxxxxx
+xxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxxxxx00xxxxxxxxx00xxxxxxxxx0xxxxxxx00xxxxxxxxx0000xxxxx00000000xxxx
+xxxxxxxxxxxx00xxxxxxxxxxxx0xxxxxxxxxxx00xxxxxxxx00xxxxxxxx00xxxxxxxxx0xxxxxxxxxxxxxxxxxx00000000xxxx
+xxxxxxxxxxxxx00xxxxxxxxxxx0xxxxxxxxxxxx00xxxxxx00xxxxxxxxx0xxxxxxxxxx0xxxxxxxxxxxxxxxxxx00000000xxxx
+xxxxxxxxxxxxxx00xxxxxxxxxx00xxxxxxxxxxx00xxxxx00xxxxxxxxxx0xxxxxxxxxx0xxxxxxxxxxxxxxxxxx00000000xxxx
+xxxxxxxxxxxxxxx00xxxxxxxxxx00xxxxxxxxxxx00xxx00xxxxxxxxx000xxxxxxxxxx0xxxxxxxxxxxxxxxxxxxxxxx00xxxxx
+xxxxxxxxxxxxxxxx00xxxxxxxxxx0xxxxxxxxxxx0000000xxxxxxxxx0xxxxxxxxxxxx0xxxxxxxxxxxxxxxxxxxxxxx00xxxxx
+xxxxxxxxxxxxxxx00000000000000000000000000000000xxxxxxxxx0xxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxx00xxxxx
+x00000000000000000000000000000000000000000xxx00000000000000000000xxxxx00xxxxxxxxxxxxxxxxxxxxx00xxxxx
+x00000000000000000000000000000000000000000xxx00xxxxxxxxxxx0xxxxx00xxxxx0xxxxxxxxxxxxxxxxxxxxx00xxxxx
+xxxxxxxxxxxxxxxxxx0xxxxxxx0xxxxx0xxxxxxx0000000xxxxxxxxxxx0xxxxxx00xxxx00xxxxxxxxxxxxxxxxxxxx00xxxxx
+xxxxxxxxxxxxxxxxxx000000000xxxxx0xxxxxxx0000000xxxxxxxxxxx0xxxxxxx00xxxx0xxxxxxxxxxxxxxxxxxxx00xxxxx
+xxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxx0xxxxxxxx000xxxxxxxxxxxxxx00xxxxxxx00xxx0xxxxxxxxxxxxxxxxxxxx00xxxxx
+xxxxxxxxxxxxxxxxxx00xxxxxxxxxxxx0xxxxxxxx000xxxxxxxxxxxxxxx0xxxxxxxx00xx00xxxxxxxxxxxxxxxxxxx000000x
+xxxxxxxxx0xxxxxxxxx00xxxxxxxxxxx0xxxxxxxx000xxxxxxxxxxxxxxx00xxxxxxxx00xx00xxxxxxxxxxxxxxxxxxxxx0000
+xxxxxxxx000xxxxxxxxx0xxxxxxxxxxx00000000000xxxxxxxxxxxxxxxxx0xxxxxxxxx00xx0xxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxx00000xxxxxxxx0xxxxxxx0xxxxxxxxxxx00xxxxxxxxxxxxxxxxxx00xxxxxxxxx00000xxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxx0000000xxxxxxx0xxxxxxx0xxxxxxxxxxx00xxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxx0xxxxxxxxxxxxxxxxxxxxxxxx
+xxxxx000000000xxxxxx0xxxxxxx00000000000000xxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxxx
+000000000000000xxxxx0xxxxxxxxxxxxxxxxxx000xxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxx
+0xxxxx0000000000xxxx00xxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxxxxxxx
+0xxxxxx00000000xxxxxx0xxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxx
+0xxxxxxxx00000xxxxxxx0xxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxxxxxx
+0xxxxxxxxxx00xxxxxxxx0xxxxxxxxxxxxxxxx000xxxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxx
+0xxxxxxxxxxx0xxxxxxx00xxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxxxxx
+0xxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxx000000xxxxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxx00xxxx000000000000000
+0xxxxxxxxxxxxxxxx000xxxxxxxxxxxxxx0x00xxxxxxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxx000000xxxxxxxxxxxxxx
+0xxxxxxxxxxxxxx000x000000xxxxxx0000x00xxxxxxxx0xxxxxxxxxxxxxxx000000xxxxxxx0000000xxxxxxxxxxxxxxxxxx
+0xxxxxxxxxxxx000xxxxxxx000000000xxxx00xxxxxxxx00xxxxxxxxx000000xxxx00xxx0000xxxxx0xxxxxxxxxxxxxxxxxx
+0xxxxxxxxxxx00xxxxxxxxxxxxxx0xxxxxx00xxxxxxxxxx0xxxxxxxx00xxxx0xxxxx00000xxxxxxxx0xxxxxxxxxxxxxxxxxx
+0000000000000xxxxxxxxxxxx000000xxxx00xxxxxxxxxx0xxxxxxxx0xxxxx0xxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxx
 xxxxxxxxx00xxxxxxxxxxxxxx0xxxx0xxx00xxxxxxxxxxx0000000000000000xxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxx
 xxxxxxxxx00xxxxxxxxxxxxx0xxxxx0xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxx
 `
@@ -115,66 +115,40 @@ Map.prototype.distanceCost = function (a, b) {
 }
 
 Map.prototype.pathTo = function (a, b) {
-  var closed = {}
-  var open = []
+  var open = new Heap(function (a, b) { return b[0] - a[0] })
   var gScore = {}
-  var fScore = {}
   var cameFrom = {}
 
   if (a.cost() === Infinity || b.cost() === Infinity) {
     return []
   }
 
-  open = [ a ]
-  gScore[a.id] = a.cost()
-  while (open.length > 0) {
-    var cId = 0
-    var current = open[cId]
-    for (var i = 0; i < open.length; i++) {
-      if ((!isNaN(fScore[current.id]) ? fScore[current.id] : Infinity) > (!isNaN(fScore[open[i].id]) ? fScore[open[i].id] : Infinity)) {
-        current = open[i]
-        cId = i
-      }
-    }
+  open.push([this.distanceCost(a, b), a])
+  gScore[a.id] = 0
+  while (!open.isEmpty()) {
+    var current = open.pop()[1]
 
     /* Goal reached */
     if (current.id === b.id) {
-      var path = [ current ]
-      while (cameFrom[current.id]) {
-        current = cameFrom[current.id]
+      var path = []
+      while (current.id !== a.id) {
         path.push(current)
+        current = cameFrom[current.id]
       }
-      return path
+      return path.reverse()
     }
 
-    open.splice(cId, 1)
-    closed[current.id] = current
-
     var neighbor = this.openNeighbor(current)
-    for (i = 0; i < neighbor.length; i++) {
-      if (closed[neighbor[i].id]) {
+    for (var i = 0; i < neighbor.length; i++) {
+      if (neighbor[i].cost() === Infinity) {
         continue
       }
-
-      var inOpen = false
-      for (var j = 0; j < open.length; j++) {
-        if (open[j].id === current.id) {
-          inOpen = true
-        }
+      var newCost = gScore[current.id] + neighbor[i].cost()
+      if ((!(neighbor[i].id in gScore)) || newCost < gScore[neighbor[i].id]) {
+        open.push([this.distanceCost(neighbor[i], b), neighbor[i]])
+        cameFrom[neighbor[i].id] = current
+        gScore[neighbor[i].id] = newCost
       }
-      if (!inOpen) {
-        open.push(neighbor[i])
-      }
-
-      var t1 = (!isNaN(gScore[current.id]) ? gScore[current.id] : Infinity) + neighbor[i].cost()
-      var t2 = gScore[neighbor[i].id] ? gScore[neighbor[i].id] : Infinity
-      if (t1 >= t2) {
-        continue
-      }
-
-      cameFrom[neighbor[i].id] = current
-      gScore[neighbor[i].id] = t1
-      fScore[neighbor[i].id] = t1 + this.distanceCost(neighbor[i], b)
     }
   }
 
