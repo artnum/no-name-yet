@@ -1,50 +1,5 @@
-/* global PIXI, Heap */
-const map = ` 
-xxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxx0000xxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxx0000xxxxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxx0000xxxxxxxxxxxx00xx000xxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxxx00x00xxxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxx00xx0xxxxxxxxxxx00xxxxx00xxxxxxxxxxxxxxxxxxxx
-xxxxxxxxxx00xxx000xxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxx00xxx0xxxxxxxxxx00xxxxxxx00xxxxxxxxxxxxxxxxxxx
-xxxxxxxxx00xxxxxx0000xxxxxxxxxxx0000000xxxxxxxxxxxxxx00xxxx000xxxxxxx00xxxxxx000xxxxxxxxxxxxxxxxxxxx
-xxxxxxxx00xxxxxxxxxx0000000000000xxxx00xxxxxxxxxxxxx00xxxxxxx0xxxxxx00xxxxxx00xxxxxxxxxxxxxxxxxxxxxx
-xxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxx00xxxxxxxx00000000xxxxxxx0xxxxxxx000xxxxxxxxxxxxx
-xxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxxxxx00xxxxxxxxxxx00xxxxxxxx00xxxxxx0xxxxxxx0000xx000x00000xxxxxxxxx
-xxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxxxxx00xxxxxxxxx00xxxxxxxxx0xxxxxxx00xxxxxxxxx0000xxxxx00000000xxxx
-xxxxxxxxxxxx00xxxxxxxxxxxx0xxxxxxxxxxx00xxxxxxxx00xxxxxxxx00xxxxxxxxx0xxxxxxxxxxxxxxxxxx00000000xxxx
-xxxxxxxxxxxxx00xxxxxxxxxxx0xxxxxxxxxxxx00xxxxxx00xxxxxxxxx0xxxxxxxxxx0xxxxxxxxxxxxxxxxxx00000000xxxx
-xxxxxxxxxxxxxx00xxxxxxxxxx00xxxxxxxxxxx00xxxxx00xxxxxxxxxx0xxxxxxxxxx0xxxxxxxxxxxxxxxxxx00000000xxxx
-xxxxxxxxxxxxxxx00xxxxxxxxxx00xxxxxxxxxxx00xxx00xxxxxxxxx000xxxxxxxxxx0xxxxxxxxxxxxxxxxxxxxxxx00xxxxx
-xxxxxxxxxxxxxxxx00xxxxxxxxxx0xxxxxxxxxxx0000000xxxxxxxxx0xxxxxxxxxxxx0xxxxxxxxxxxxxxxxxxxxxxx00xxxxx
-xxxxxxxxxxxxxxx00000000000000000000000000000000xxxxxxxxx0xxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxx00xxxxx
-x00000000000000000000000000000000000000000xxx00000000000000000000xxxxx00xxxxxxxxxxxxxxxxxxxxx00xxxxx
-x00000000000000000000000000000000000000000xxx00xxxxxxxxxxx0xxxxx00xxxxx0xxxxxxxxxxxxxxxxxxxxx00xxxxx
-xxxxxxxxxxxxxxxxxx0xxxxxxx0xxxxx0xxxxxxx0000000xxxxxxxxxxx0xxxxxx00xxxx00xxxxxxxxxxxxxxxxxxxx00xxxxx
-xxxxxxxxxxxxxxxxxx000000000xxxxx0xxxxxxx0000000xxxxxxxxxxx0xxxxxxx00xxxx0xxxxxxxxxxxxxxxxxxxx00xxxxx
-xxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxx0xxxxxxxx000xxxxxxxxxxxxxx00xxxxxxx00xxx0xxxxxxxxxxxxxxxxxxxx00xxxxx
-xxxxxxxxxxxxxxxxxx00xxxxxxxxxxxx0xxxxxxxx000xxxxxxxxxxxxxxx0xxxxxxxx00xx00xxxxxxxxxxxxxxxxxxx000000x
-xxxxxxxxx0xxxxxxxxx00xxxxxxxxxxx0xxxxxxxx000xxxxxxxxxxxxxxx00xxxxxxxx00xx00xxxxxxxxxxxxxxxxxxxxx0000
-xxxxxxxx000xxxxxxxxx0xxxxxxxxxxx00000000000xxxxxxxxxxxxxxxxx0xxxxxxxxx00xx0xxxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxxx00000xxxxxxxx0xxxxxxx0xxxxxxxxxxx00xxxxxxxxxxxxxxxxxx00xxxxxxxxx00000xxxxxxxxxxxxxxxxxxxxxxxx
-xxxxxx0000000xxxxxxx0xxxxxxx0xxxxxxxxxxx00xxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxx0xxxxxxxxxxxxxxxxxxxxxxxx
-xxxxx000000000xxxxxx0xxxxxxx00000000000000xxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxxx
-000000000000000xxxxx0xxxxxxxxxxxxxxxxxx000xxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxx
-0xxxxx0000000000xxxx00xxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxxxxxxx
-0xxxxxx00000000xxxxxx0xxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxx
-0xxxxxxxx00000xxxxxxx0xxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxxxxxx
-0xxxxxxxxxx00xxxxxxxx0xxxxxxxxxxxxxxxx000xxxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxx
-0xxxxxxxxxxx0xxxxxxx00xxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxxxxx
-0xxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxx000000xxxxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxx00xxxx000000000000000
-0xxxxxxxxxxxxxxxx000xxxxxxxxxxxxxx0x00xxxxxxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxx000000xxxxxxxxxxxxxx
-0xxxxxxxxxxxxxx000x000000xxxxxx0000x00xxxxxxxx0xxxxxxxxxxxxxxx000000xxxxxxx0000000xxxxxxxxxxxxxxxxxx
-0xxxxxxxxxxxx000xxxxxxx000000000xxxx00xxxxxxxx00xxxxxxxxx000000xxxx00xxx0000xxxxx0xxxxxxxxxxxxxxxxxx
-0xxxxxxxxxxx00xxxxxxxxxxxxxx0xxxxxx00xxxxxxxxxx0xxxxxxxx00xxxx0xxxxx00000xxxxxxxx0xxxxxxxxxxxxxxxxxx
-0000000000000xxxxxxxxxxxx000000xxxx00xxxxxxxxxx0xxxxxxxx0xxxxx0xxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxxx
-xxxxxxxxx00xxxxxxxxxxxxxx0xxxx0xxx00xxxxxxxxxxx0000000000000000xxxxxxxxxxxxxxxxxxx00xxxxxxxxxxxxxxxx
-xxxxxxxxx00xxxxxxxxxxxxx0xxxxx0xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxx
-`
-
-var lines = map.match(/^[a-z0-9A-Z]*$/gm)
-
+/* global PIXI, Heap, MAP */
+var lines = MAP.match(/^[^\s]+$/gm)
 var Node = function (value, x, y) {
   this.id = this.idFromPos(x, y)
   this.x = x
@@ -60,19 +15,32 @@ Node.prototype.cost = function () {
   switch (this.value) {
     case 'x':
       return Infinity
-    case '0':
+    case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+      return Number(this.value) + 10
+    case '!':
+      return 50
+    case '@':
       return 1
   }
 }
 
 var Map = function (buffer) {
   this.nodes = []
+  /* Assume map is squared */
+  this.width = buffer[0].length
+  this.height = buffer.length
 
   for (var i = 0; i < buffer.length; i++) {
     for (var j = 0; j < buffer[i].length; j++) {
       this.nodes.push(new Node(buffer[i][j], j, i))
     }
   }
+}
+
+Map.prototype.index = function (x, y) {
+  if (x < 0 || x < 0) { return -1 }
+  if (x > this.width || y > this.height) { return -1 }
+  return x + (y * this.width)
 }
 
 Map.prototype.openNodes = function () {
@@ -92,16 +60,18 @@ Map.prototype.randomNode = function () {
   return oNodes[Math.floor(Math.random() * oNodes.length)]
 }
 
-Map.prototype.openNeighbor = function (node) {
+Map.prototype.neighbors = function (node) {
   var nodes = []
+  var idx = [
+    this.index(node.x - 1, node.y),
+    this.index(node.x + 1, node.y),
+    this.index(node.x, node.y - 1),
+    this.index(node.x, node.y + 1)
+  ]
 
-  for (var i = 0; i < this.nodes.length; i++) {
-    var n = this.nodes[i]
-    if (n.id === n.idFromPos(node.x - 1, node.y) ||
-      n.id === n.idFromPos(node.x + 1, node.y) ||
-      n.id === n.idFromPos(node.x, node.y + 1) ||
-      n.id === n.idFromPos(node.x, node.y - 1)) {
-      nodes.push(this.nodes[i])
+  for (var i = 0; i < idx.length; i++) {
+    if (idx[i] !== -1) {
+      nodes.push(this.nodes[idx[i]])
     }
   }
 
@@ -114,6 +84,7 @@ Map.prototype.distanceCost = function (a, b) {
   return a.cost() * Math.max(dx, dy) + (b.cost() - a.cost()) * Math.min(dx, dy)
 }
 
+/* A* Path Finding */
 Map.prototype.pathTo = function (a, b) {
   var open = new Heap(function (a, b) { return b[0] - a[0] })
   var gScore = {}
@@ -138,7 +109,7 @@ Map.prototype.pathTo = function (a, b) {
       return path.reverse()
     }
 
-    var neighbor = this.openNeighbor(current)
+    var neighbor = this.neighbors(current)
     for (var i = 0; i < neighbor.length; i++) {
       if (neighbor[i].cost() === Infinity) {
         continue
@@ -155,73 +126,112 @@ Map.prototype.pathTo = function (a, b) {
   return []
 }
 
+Map.prototype.findNode = function (x, y) {
+  var n = new Node('x', x, y)
+  for (var i = 0; i < this.nodes.length; i++) {
+    if (this.nodes[i].id === n.id) {
+      return this.nodes[i]
+    }
+  }
+  return null
+}
+
 var MapDraw = function (map) {
   this.map = map
-  this.canvas = new PIXI.Application(1500, 615)
+  this.nodes = {}
+  this.canvas = new PIXI.Application({ width: 1600, height: 900 })
   this.canvas.stage.interactive = true
+  this.canvas.stage.on('click', this.events.mapClick.bind(this))
 }
 
 MapDraw.prototype.place = function (dom) {
   dom.appendChild(this.canvas.view)
 }
 
-MapDraw.prototype.node = function (node) {
-  var graphic = new PIXI.Graphics()
-  var color = 0xFFFFFF
+MapDraw.prototype.node = function (node, graphic) {
+  var color = 0x800000
 
   switch (node.value) {
     default: break
-    case '0': color = 0x000088; break
-    case 'x': color = 0x000000; break
+    case '1': color = 0x803400; break
+    case '2': color = 0x805900; break
+    case '3': color = 0x806d00; break
+    case '4': color = 0x808000; break
+    case '5': color = 0x467600; break
+    case '6': color = 0x005b2a; break
+    case '7': color = 0xff0000; break
+    case '8': color = 0x0a1b57; break
+    case '9': color = 0x1a0b58; break
+    case 'x': color = 0xFFFFFF; break
   }
 
+  graphic.lineStyle(0, 0x0000FF, 1)
   graphic.beginFill(color)
-  graphic.drawRect(node.x * 15, node.y * 15, 15, 15)
+  graphic.drawRect(node.x, node.y, 1, 1)
   graphic.endFill()
 
   return graphic
 }
 
 MapDraw.prototype.run = function () {
-  this.nodes = {}
+  this.drawMap()
+  this.pointer()
+}
+
+MapDraw.prototype.drawMap = function () {
+  var container = new PIXI.Container()
+  var graphic = new PIXI.Graphics()
+
+  /* Pixels */
   for (var i = 0; i < this.map.nodes.length; i++) {
-    var graphic = this.node(this.map.nodes[i])
-    graphic.interactive = true
-    graphic.on('pointertap', this.events.nodeSelect.bind(this))
+    this.node(this.map.nodes[i], graphic)
     this.nodes[this.map.nodes[i].id] = { g: graphic, i: i }
-    this.canvas.stage.addChild(graphic)
   }
+  if (this.graphicMap) {
+    this.canvas.stage.removeChild(this.graphicMap)
+  }
+  container.addChild(graphic)
+
+  var texture = PIXI.Texture.fromImage('data/interdicsion.png')
+  var logo = new PIXI.Sprite(texture)
+  logo.anchor.set(0.5)
+  logo.x = this.canvas.screen.width - (100 + (logo.width / 2))
+  logo.y = this.canvas.screen.height - (100 + (logo.height / 2))
+  container.addChild(logo)
+
+  this.canvas.stage.addChild(container)
+  this.graphicMap = container
+}
+
+MapDraw.prototype.pointer = function () {
+  this.pointer = new PIXI.Sprite(PIXI.Texture.fromImage('data/pointer.png'))
+  this.pointer.anchor.set(0.5)
+  var start = this.map.randomNode()
+
+  this.pointer.x = start.x
+  this.pointer.y = start.y
+  this.pointer.road = []
+  this.canvas.ticker.add(function (delta) {
+    if (this.pointer.road.length <= 0) { return }
+    if (!this.pointer.lastMove || Math.abs(this.pointer.lastMove - new Date().getTime()) > 20) {
+      var nextPoint = this.pointer.road.shift()
+
+      this.pointer.x = nextPoint.x
+      this.pointer.y = nextPoint.y
+
+      this.pointer.lastMove = new Date().getTime()
+    }
+  }.bind(this))
+
+  this.canvas.stage.addChild(this.pointer)
 }
 
 MapDraw.prototype.events = {
-  nodeSelect: function (event) {
-    var graphic = event.target
-    var nodeid
-    for (var k in this.nodes) {
-      if (this.nodes[k].g === graphic) {
-        nodeid = k
-        break
-      }
-    }
-    var mNode = this.map.nodes[this.nodes[nodeid].i]
-
-    if (!this.start) {
-      graphic.clear()
-      graphic.beginFill(0x880000)
-      graphic.drawRect(mNode.x * 15, mNode.y * 15, 15, 15)
-      graphic.endFill()
-      this.start = mNode
-    } else {
-      var nodes = this.map.pathTo(this.start, mNode)
-      for (var i = 0; i < nodes.length; i++) {
-        graphic = this.nodes[nodes[i].id].g
-        graphic.clear()
-        graphic.beginFill(0x880000)
-        graphic.drawRect(nodes[i].x * 15, nodes[i].y * 15, 15, 15)
-        graphic.endFill()
-      }
-      this.start = null
-    }
+  mapClick: function (event) {
+    var n = this.map.findNode(Math.round(event.data.global.x), Math.round(event.data.global.y))
+    var p = this.map.findNode(this.pointer.x, this.pointer.y)
+    console.log(n, p)
+    this.pointer.road = this.map.pathTo(p, n)
   }
 }
 
