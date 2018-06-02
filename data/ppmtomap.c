@@ -91,7 +91,6 @@ int main( int argc, char ** argv) {
                         color |= tagbuffer[0]; color = color << 8; 
                         color |= tagbuffer[1]; color = color << 8; 
                         color |= tagbuffer[2];
-                        printf("%c", colorToLevel(color));
                         if(color < COLOR_LIMIT) {
                             outbuffer[statehead[COUNT_OUTBUFF]] = colorToLevel(color);
                         } else {
