@@ -11,17 +11,43 @@ Node.prototype.idFromPos = function (x, y) {
   return x + '-' + y
 }
 
-Node.prototype.cost = function () {
+Node.prototype.cost = function (relativeTo, previous) {
+  var baseCost = Infinity
+
   switch (this.value) {
     case 'x':
-      return Infinity
+      return baseCost
     case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
-      return Number(this.value) + 10
-    case '!':
-      return 50
-    case '@':
-      return 1
+      baseCost = Number(this.value) + 10
   }
+
+  if (!relativeTo) {
+    return baseCost
+  }
+
+  /* turning is more expensive */
+  var turning = false
+  var dx = this.x - relativeTo.x
+  var dy = this.y - relativeTo.y
+  var cos = Math.cos(Math.atan2(dy, dx))
+
+  if (cos !== 0 || cos !== 1) {
+    baseCost++
+    turning = true
+  }
+
+  /* If we turn but we previously turned, it's ok */
+  if (turning && previous) {
+    dx = this.x - previous.x
+    dy = this.y - previous.y
+    cos = Math.cos(Math.atan2(dy, dx))
+
+    if (cos !== 0 || cos !== 1) {
+      baseCost--
+    }
+  }
+
+  return baseCost
 }
 
 var Map = function (buffer) {
@@ -63,10 +89,14 @@ Map.prototype.randomNode = function () {
 Map.prototype.neighbors = function (node) {
   var nodes = []
   var idx = [
-    this.index(node.x - 1, node.y),
-    this.index(node.x + 1, node.y),
     this.index(node.x, node.y - 1),
-    this.index(node.x, node.y + 1)
+    this.index(node.x, node.y + 1),
+    this.index(node.x + 1, node.y),
+    this.index(node.x + 1, node.y - 1),
+    this.index(node.x + 1, node.y + 1),
+    this.index(node.x - 1, node.y),
+    this.index(node.x - 1, node.y - 1),
+    this.index(node.x - 1, node.y + 1)
   ]
 
   for (var i = 0; i < idx.length; i++) {
@@ -81,7 +111,7 @@ Map.prototype.neighbors = function (node) {
 Map.prototype.distanceCost = function (a, b) {
   var dx = Math.abs(a.x - b.x)
   var dy = Math.abs(a.y - b.y)
-  return a.cost() * Math.max(dx, dy) + (b.cost() - a.cost()) * Math.min(dx, dy)
+  return a.cost(b) * Math.max(dx, dy) + (b.cost(a) - a.cost(b)) * Math.min(dx, dy)
 }
 
 /* A* Path Finding */
@@ -114,7 +144,7 @@ Map.prototype.pathTo = function (a, b) {
       if (neighbor[i].cost() === Infinity) {
         continue
       }
-      var newCost = gScore[current.id] + neighbor[i].cost()
+      var newCost = gScore[current.id] + neighbor[i].cost(current, cameFrom[current.id])
       if ((!(neighbor[i].id in gScore)) || newCost < gScore[neighbor[i].id]) {
         open.push([this.distanceCost(neighbor[i], b), neighbor[i]])
         cameFrom[neighbor[i].id] = current
