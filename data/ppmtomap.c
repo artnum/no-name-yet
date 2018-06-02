@@ -6,6 +6,16 @@
 #define BUFFER_SIZE     1024
 
 #define COLOR_LIMIT     0xEEEEEE
+/* 1. 17E4B1
+ * 2. 2FC962
+ * 3. 47AE13
+ * 4. 5F92C4
+ * 5. 777775
+ * 6. A740D7
+ * 7. BF2588
+ * 8. D70A39
+ * 9. E27F7F
+ */
 enum PPM_TYPE {  P1 = 1, P2, P3, P4, P5, P6 };
 
 struct ppm_head {
@@ -22,19 +32,27 @@ struct ppm_head {
 #define COUNT_TAGBUFF   1
 #define IN_COMMENT      2
 #define WIDTH_POS       3
+#define COUNT_OUTBUFF   4
+
+const double clRatio = 0.000000575;
+unsigned char colorToLevel ( unsigned int color ) {
+    return floor(((double)color * clRatio) + 0.5) + 48; 
+}
+
+
 int main( int argc, char ** argv) {
     FILE * fp = NULL, *fpw = NULL;
-    char buffer[BUFFER_SIZE] = { '\0' };
+    unsigned char buffer[BUFFER_SIZE] = { '\0' };
     size_t r = 0;
     int i = 0;
     long int value = 0;
     char *ptr = NULL;
     struct ppm_head head;
-    char tagbuffer[BUFFER_SIZE] = { '\0' };
-    /* 0: head progress, 1: tagbuffer count, 2: in comment, 3: width position */
-    int statehead[] = {0, 0, 0, 0, 0, 0, 0 };
+    unsigned char tagbuffer[BUFFER_SIZE] = { '\0' };
+    unsigned char outbuffer[BUFFER_SIZE] = { '\0' };
+    /* 0: head progress, 1: tagbuffer count, 2: in comment, 3: width position, 4: outbuffer count */
+    int statehead[] = {0, 0, 0, 0, -1, 0, 0 };
     unsigned int color = 0; 
-    double level = 0;
 
     if(argc < 3) { exit(0); }
 
@@ -58,30 +76,35 @@ int main( int argc, char ** argv) {
     head._inbody = 0;
     head.offset = 0;
     do {
-        r = fread(buffer, sizeof(buffer[0]), BUFFER_SIZE, fp);
-        for(i = 0; i < BUFFER_SIZE; i++) {
-            
+        r = fread((char *)buffer, sizeof(buffer[0]), BUFFER_SIZE, fp);
+        for(i = 0; i < r; i++) {
             if(statehead[HEAD_PROGRESS] == 4) {
+                if(statehead[COUNT_OUTBUFF] == -1) {
+                    statehead[COUNT_OUTBUFF] = 0;
+                }
                 tagbuffer[statehead[COUNT_TAGBUFF]] = buffer[i];
                 statehead[COUNT_TAGBUFF]++;
                 if(head.maxval < 256) {
                     /* 1 byte per color */
                     if(statehead[COUNT_TAGBUFF] == 3) {
                         color = 0;
-                        color |= tagbuffer[0] << 16;
-                        color |= tagbuffer[1] << 8;
+                        color |= tagbuffer[0]; color = color << 8; 
+                        color |= tagbuffer[1]; color = color << 8; 
                         color |= tagbuffer[2];
-                        if(color <= COLOR_LIMIT) {
-                            color = color % 10;
-                            fprintf(fpw,"%d", color);
+                        printf("%c", colorToLevel(color));
+                        if(color < COLOR_LIMIT) {
+                            outbuffer[statehead[COUNT_OUTBUFF]] = colorToLevel(color);
                         } else {
-                            fprintf(fpw, "x");
+                            outbuffer[statehead[COUNT_OUTBUFF]] = 'x';
                         }
+                        statehead[COUNT_OUTBUFF]++;
+
                         statehead[COUNT_TAGBUFF] = 0;
                         statehead[WIDTH_POS]++;
                         if(statehead[WIDTH_POS] == head.width) {
                             statehead[WIDTH_POS] = 0;
-                            fprintf(fpw, "\n");
+                            outbuffer[statehead[COUNT_OUTBUFF]] = '\n';
+                            statehead[COUNT_OUTBUFF]++;
                         }
                     }
                 } else {
@@ -91,6 +114,12 @@ int main( int argc, char ** argv) {
                         statehead[COUNT_TAGBUFF] = 0;
                     }
                 }
+                
+                if(statehead[COUNT_OUTBUFF] == BUFFER_SIZE) {
+                    fwrite(outbuffer, sizeof(outbuffer[0]), statehead[COUNT_OUTBUFF], fpw);
+                    statehead[COUNT_OUTBUFF] = 0;
+                }
+
                 continue;
             }
             
@@ -110,7 +139,7 @@ int main( int argc, char ** argv) {
                     switch(statehead[HEAD_PROGRESS]) {
                         case 0:
                             /* Type */
-                            if(strncmp(tagbuffer, "P6", 2) != 0) {
+                            if(strncmp((char *)tagbuffer, "P6", 2) != 0) {
                                 printf("Not in P6 format\n");
                                 exit(0);
                             }
@@ -120,7 +149,7 @@ int main( int argc, char ** argv) {
                         case 1:
                         case 2:
                         case 3:
-                            value = strtol(tagbuffer, &ptr, 10);
+                            value = strtol((char *)tagbuffer, &ptr, 10);
                             if(*ptr != '\0') {
                                 printf("Invalid value : %d \"%s\"\n", statehead[HEAD_PROGRESS], tagbuffer); 
                                 exit(0);
@@ -165,6 +194,10 @@ int main( int argc, char ** argv) {
             } 
         }
     } while(r == BUFFER_SIZE);
+
+    if(statehead[COUNT_OUTBUFF] > 0) {
+        fwrite(outbuffer, sizeof(outbuffer[0]), statehead[COUNT_OUTBUFF], fpw);
+    }
 
     fclose(fp);
     fprintf(fpw, "`");
